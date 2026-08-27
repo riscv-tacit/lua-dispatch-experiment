@@ -1,0 +1,78 @@
+--- lua-5.4.7/src/lvm.c	2024-06-13 15:15:10.000000000 -0700
++++ lua-riscv-fused3/src/lvm.c	2026-08-02 02:06:34.122060262 -0700
+@@ -1157,6 +1157,11 @@
+ #if LUA_USE_JUMPTABLE
+ #include "ljumptab.h"
+ #endif
++
++/* Fused dispatch (profile-guided): guarded DIRECT branch to the profiled-hot
++** successor before falling back to indirect dispatch. */
++#define vmbreak_fused(g)  { vmfetch(); if (GET_OPCODE(i) == g) goto L_##g; vmdispatch(GET_OPCODE(i)); }
++
+  startfunc:
+   trap = L->hookmask;
+  returning:  /* trap already set */
+@@ -1170,6 +1175,9 @@
+   for (;;) {
+     Instruction i;  /* instruction being executed */
+     vmfetch();
++#if LUA_USE_JUMPTABLE
++    if (GET_OPCODE(i) == OP_ADD) goto L_OP_ADD;  /* profile-guided entry guard */
++#endif
+     #if 0
+       /* low-level line tracing for debugging Lua */
+       printf("line: %d\n", luaG_getfuncline(cl->p, pcRel(pc, cl->p)));
+@@ -1188,7 +1196,7 @@
+         StkId ra = RA(i);
+         lua_Integer b = GETARG_sBx(i);
+         setivalue(s2v(ra), b);
+-        vmbreak;
++        vmbreak_fused(OP_FORPREP);
+       }
+       vmcase(OP_LOADF) {
+         StkId ra = RA(i);
+@@ -1393,7 +1401,7 @@
+       }
+       vmcase(OP_ADDI) {
+         op_arithI(L, l_addi, luai_numadd);
+-        vmbreak;
++        vmbreak_fused(OP_GETTABLE);
+       }
+       vmcase(OP_ADDK) {
+         op_arithK(L, l_addi, luai_numadd);
+@@ -1459,7 +1467,7 @@
+       }
+       vmcase(OP_ADD) {
+         op_arith(L, l_addi, luai_numadd);
+-        vmbreak;
++        vmbreak_fused(OP_MOVE);
+       }
+       vmcase(OP_SUB) {
+         op_arith(L, l_subi, luai_numsub);
+@@ -1467,7 +1475,7 @@
+       }
+       vmcase(OP_MUL) {
+         op_arith(L, l_muli, luai_nummul);
+-        vmbreak;
++        vmbreak_fused(OP_MUL);
+       }
+       vmcase(OP_MOD) {
+         savestate(L, ci);  /* in case of division by 0 */
+@@ -1610,7 +1618,7 @@
+       }
+       vmcase(OP_LT) {
+         op_order(L, l_lti, LTnum, lessthanothers);
+-        vmbreak;
++        vmbreak_fused(OP_GETTABLE);
+       }
+       vmcase(OP_LE) {
+         op_order(L, l_lei, LEnum, lessequalothers);
+@@ -1657,7 +1665,7 @@
+         StkId ra = RA(i);
+         int cond = !l_isfalse(s2v(ra));
+         docondjump();
+-        vmbreak;
++        vmbreak_fused(OP_GETUPVAL);
+       }
+       vmcase(OP_TESTSET) {
+         StkId ra = RA(i);

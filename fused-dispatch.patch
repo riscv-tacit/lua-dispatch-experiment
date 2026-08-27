@@ -1,0 +1,51 @@
+--- lua-5.4.7/src/lvm.c	2024-06-13 15:15:10.000000000 -0700
++++ lua-riscv-fused/src/lvm.c	2026-08-01 15:18:36.115255787 -0700
+@@ -1157,6 +1157,12 @@
+ #if LUA_USE_JUMPTABLE
+ #include "ljumptab.h"
+ #endif
++
++/* Fused dispatch (profile-guided): after this handler, the profiled-hot
++** successor gets a guarded DIRECT branch instead of the indirect dispatch.
++** Guard cost ~1 cycle predicted; a hit skips the indirect jr entirely. */
++#define vmbreak_fused(g)  { vmfetch(); if (GET_OPCODE(i) == g) goto L_##g; vmdispatch(GET_OPCODE(i)); }
++
+  startfunc:
+   trap = L->hookmask;
+  returning:  /* trap already set */
+@@ -1272,7 +1278,7 @@
+         }
+         else
+           Protect(luaV_finishget(L, rb, rc, ra, slot));
+-        vmbreak;
++        vmbreak_fused(OP_GETTABLE);
+       }
+       vmcase(OP_GETI) {
+         StkId ra = RA(i);
+@@ -1300,7 +1306,7 @@
+         }
+         else
+           Protect(luaV_finishget(L, rb, rc, ra, slot));
+-        vmbreak;
++        vmbreak_fused(OP_GETFIELD);
+       }
+       vmcase(OP_SETTABUP) {
+         const TValue *slot;
+@@ -1328,7 +1334,7 @@
+         }
+         else
+           Protect(luaV_finishset(L, s2v(ra), rb, rc, slot));
+-        vmbreak;
++        vmbreak_fused(OP_ADDI);
+       }
+       vmcase(OP_SETI) {
+         StkId ra = RA(i);
+@@ -1393,7 +1399,7 @@
+       }
+       vmcase(OP_ADDI) {
+         op_arithI(L, l_addi, luai_numadd);
+-        vmbreak;
++        vmbreak_fused(OP_LE);
+       }
+       vmcase(OP_ADDK) {
+         op_arithK(L, l_addi, luai_numadd);
