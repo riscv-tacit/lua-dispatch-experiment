@@ -1,0 +1,7 @@
+# build products of the interpreter trees; the binaries that were actually run are
+# identified by md5 in each tree's manifest.json
+*.o
+*.a
+*/src/lua
+*/src/luac
+luac.out

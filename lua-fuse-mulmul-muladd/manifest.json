@@ -1,0 +1,16 @@
+{
+ "tag": "mulmul-muladd",
+ "guards": ["OP_MUL", "OP_ADD"],
+ "guard_order": "MUL tested first, then ADD (traffic order at MUL's site: ADD 40.8M / MUL 40.0M / SUB 19.8M)",
+ "site": "OP_MUL dispatch tail only",
+ "placebo": false,
+ "cflags": "-O2 -g -static -fno-crossjumping",
+ "md5": "84207d01f5a3cb3d588ab6d27d4702ad",
+ "text_md5": "86c48c72d40ddc0b56fcd1fdd4d20518",
+ "luaV_execute_bytes": 16276,
+ "jr_sites": 156,
+ "derived_from": {"tree": "lua-fuse-base", "text_md5": "cf5d6c2bfa516158ace022e7f1f38e00",
+   "edit": "lvm.c: added vmbreak_fused2(g1,g2) macro; OP_MUL handler vmbreak -> vmbreak_fused2(OP_MUL, OP_ADD). By hand, no codegen."},
+ "codegen_notes": "gcc CSEs andi a5,s0,127 across both compares, so guard 2 costs only li+beq (8 B, +8 over the single-guard variant). Guard 2 targets 0x2006c, the mv s7,s4 pc-update stub before ADD's disptab entry 0x2006e. jr count unchanged at 156.",
+ "predicted": "MUL->ADD excess was 337 Mcyc (48.4% exposed) in the single-guard arm; ceiling if fully recovered ~337 Mcyc, offset by ~53 Mcyc of extra instructions on the 19.8M MUL->SUB exits. MUL->MUL should be unchanged as an internal control."
+}

@@ -1,0 +1,11 @@
+{
+ "tag": "gt127-layout-control",
+ "guards": ["OP_MUL, compiled but never reachable (GUARD_TARGET=127)"],
+ "placebo": true,
+ "cflags": "-O2 -g -static -fno-crossjumping",
+ "md5": "f028741ab06ae7ddcebeba7f25d35c9a",
+ "text_md5": "2157d977fd0c2a4d8a0f66e180456d22",
+ "pairs_with": {"tree": "lua-fuse-mulmul", "text_md5": "43b92bd54daa7c62d9d2154d0a737a96",
+                "text_bytes_differing": 2},
+ "purpose": "layout/regalloc control: identical code to the guard-active arm except one li immediate"
+}

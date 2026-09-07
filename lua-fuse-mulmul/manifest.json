@@ -1,0 +1,26 @@
+{
+ "tag": "mulmul",
+ "guards": [
+  "OP_MUL"
+ ],
+ "loop_guard": null,
+ "placebo": false,
+ "cflags": "-O2 -g -static -fno-crossjumping",
+ "md5": "1ed17a5fbcbabaf9559e3485c5d55b39",
+ "text_md5": "43b92bd54daa7c62d9d2154d0a737a96",
+ "lua": "/scratch/iansseijelly/tacit-chipyard/software/lua-dispatch/lua-fuse-mulmul/src/lua",
+ "luaV_execute": {
+  "addr": "0x000000000001ff46",
+  "bytes": 16268
+ },
+ "jr_sites": 156,
+ "vmbreaks_replaced": {
+  "OP_MUL": "vmbreak_fused(OP_MUL)"
+ },
+ "derived_from": {
+  "tree": "lua-fuse-base",
+  "text_md5": "cf5d6c2bfa516158ace022e7f1f38e00",
+  "edit": "lvm.c:1478 vmbreak -> vmbreak_fused(OP_MUL), by hand; no other change"
+ },
+ "notes": "jr_sites 156 vs baseline 157: one cold handler's dispatch tail merged under GCC's re-layout. All 13 hot mandelbrot handlers verified to still own a jr in their own span."
+}
