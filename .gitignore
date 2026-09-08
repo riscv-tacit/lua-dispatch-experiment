@@ -5,3 +5,8 @@
 */src/lua
 */src/luac
 luac.out
+# interpreter binaries and the compiled trace-run inside the FireMarshal overlays are
+# installed by the AE image stage from the trees above; only sources are tracked
+workloads/*/overlay/root/lua-dispatch/lua
+workloads/*/overlay/root/lua-dispatch/lua-*
+workloads/*/overlay/root/lua-dispatch/trace-run

@@ -1,0 +1,19 @@
+{
+  "name": "lua-fuse-base-mb",
+  "base": "br-base.json",
+  "overlay": "overlay",
+  "host-init": "host-init.sh",
+  "command": "cd /root/lua-dispatch && ./lua bench/mandelbrot.lua 900 && echo LUA_ALL_OK",
+  "jobs": [
+    {
+      "name": "base-mandelbrot-traced",
+      "command": "cd /root/lua-dispatch && ./trace-run ./lua bench/mandelbrot.lua 900",
+      "firesim": { "simulation_outputs": [ "tacit0.out" ] }
+    },
+    {
+      "name": "base-chores",
+      "command": "sh /root/lua-dispatch/run-chores.sh",
+      "outputs": [ "/root/chores/driver_map.txt", "/root/chores/jump_label_patch_map.txt" ]
+    }
+  ]
+}
