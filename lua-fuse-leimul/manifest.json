@@ -1,0 +1,19 @@
+{
+ "tag": "fuse-leimul",
+ "guards": [
+  "OP_MUL (at OP_LEI's exit)"
+ ],
+ "placebo": false,
+ "site": "OP_LEI dispatch tail",
+ "cflags": "-O2 -g -static -fno-crossjumping",
+ "md5": "cecfb79f2ef85496d7aea5fb12fa58e4",
+ "lua": "/scratch/iansseijelly/tacit-chipyard/software/lua-dispatch/lua-fuse-leimul/src/lua",
+ "jr_sites": 156,
+ "derived_from": {
+  "tree": "lua-fuse-base",
+  "edit": "lvm.c: OP_LEI vmbreak -> vmbreak_fused(OP_MUL), by hand"
+ },
+ "pairs_with": "lua-leimul-gt127",
+ "text_bytes_differing": 2,
+ "purpose": "span-vs-entry test: the span profile ranks LEI->MUL 4th (130 M excess, flat 18-19 vs floor 12); the entry-block profile says the arrival is predicted (5 cyc, 27 M). If the entry block is right, this guard buys nothing beyond the layout term."
+}
