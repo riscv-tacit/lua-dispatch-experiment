@@ -10,3 +10,4 @@ luac.out
 workloads/*/overlay/root/lua-dispatch/lua
 workloads/*/overlay/root/lua-dispatch/lua-*
 workloads/*/overlay/root/lua-dispatch/trace-run
+workloads/*/overlay/root/lua-dispatch/time-run

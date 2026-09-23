@@ -21,6 +21,8 @@ cd "$(dirname "$0")"
 RV="riscv64-unknown-linux-gnu-"
 FUSE_TREES="lua-fuse-base lua-fuse-mulmul lua-fuse-mulmul-muladd lua-mulmul-gt127 lua-fuse-leimul lua-leimul-gt127"
 FUSE_CFLAGS="-O2 -g -static -fno-crossjumping"
+# lua-fuse-base .text, as recorded by its children's derived_from.text_md5
+BASE_TEXT_MD5="cf5d6c2bfa516158ace022e7f1f38e00"
 
 build_riscv() {  # tree cflags
   make -C "$1/src" clean >/dev/null 2>&1 || true
@@ -39,17 +41,33 @@ act1() {
   echo "act1: lua-host/src/lua, lua-riscv/src/lua (cross-jumped)"
 }
 
+# The manifests' `md5` is the whole ELF of the binary that ran on the FPGA, built under
+# /scratch/iansseijelly/tacit-chipyard. -g embeds the build directory in DWARF
+# (.debug_line_str/comp_dir), so that hash can only reproduce from that exact path and is
+# reported here for the record, not gated on. What must reproduce is the code: `text_md5`,
+# the md5 of .text alone, which is path-independent. lua-fuse-base has no text_md5 field of
+# its own but is pinned by the mulmul / mulmul-muladd manifests, which record their parent's
+# .text as derived_from.text_md5 -- so it is checked against that.
 fuse() {
   local trees="${*:-$FUSE_TREES}" rc=0
   for t in $trees; do
     [ -f "$t/manifest.json" ] || { echo "$t: no manifest.json" >&2; rc=1; continue; }
-    local want; want=$(python3 -c "import json;print(json.load(open('$t/manifest.json'))['md5'])")
+    local file_want; file_want=$(python3 -c "import json;print(json.load(open('$t/manifest.json'))['md5'])")
+    local want; want=$(python3 -c "
+import json
+m = json.load(open('$t/manifest.json'))
+print('$BASE_TEXT_MD5' if '$t' == 'lua-fuse-base' else m.get('text_md5', ''))")
     build_riscv "$t" "$FUSE_CFLAGS"
-    local got; got=$(md5sum < "$t/src/lua" | cut -d' ' -f1)
-    if [ "$got" = "$want" ]; then
-      printf '%-24s ok      %s\n' "$t" "${got:0:12}"
+    local file_got; file_got=$(md5sum < "$t/src/lua" | cut -d' ' -f1)
+    local got; got=$("${RV}objcopy" -O binary --only-section=.text "$t/src/lua" /dev/stdout | md5sum | cut -d' ' -f1)
+    local note=""
+    [ "$file_got" = "$file_want" ] || note=" (ELF ${file_got:0:12}, manifest ${file_want:0:12}: DWARF build path)"
+    if [ -z "$want" ]; then
+      printf '%-24s text %s  (no reference recorded)%s\n' "$t" "${got:0:12}" "$note"
+    elif [ "$got" = "$want" ]; then
+      printf '%-24s ok   text %s%s\n' "$t" "${got:0:12}" "$note"
     else
-      printf '%-24s MISMATCH built %s, manifest %s\n' "$t" "${got:0:12}" "${want:0:12}"; rc=1
+      printf '%-24s MISMATCH text built %s, manifest %s\n' "$t" "${got:0:12}" "${want:0:12}"; rc=1
     fi
   done
   return $rc

@@ -1,0 +1,7 @@
+{
+  "name": "lua-fuse-runtime",
+  "base": "br-base.json",
+  "overlay": "overlay",
+  "host-init": "host-init.sh",
+  "command": "sh /root/lua-dispatch/run-arms.sh"
+}
